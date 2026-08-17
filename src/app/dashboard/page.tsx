@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { AttemptHistoryTable } from "@/components/AttemptHistoryTable";
 import { Footer, Nav } from "@/components/Nav";
 import { ReadinessRail } from "@/components/ReadinessRail";
+import { getGuestUserId } from "@/lib/guest";
 import { pointsToPass, weakestDomain } from "@/lib/scoring/readiness";
 import { getDashboardData } from "@/server/queries/dashboard";
 import { DomainBars } from "./_components/DomainBars";
@@ -14,14 +15,12 @@ export const metadata: Metadata = { title: "Dashboard" };
 const CERT_SLUG = "cca-f";
 
 export default async function DashboardPage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/signin?callbackUrl=/dashboard");
+  const userId = await getGuestUserId();
 
-  const data = await getDashboardData(session.user.id, CERT_SLUG);
+  const data = await getDashboardData(userId, CERT_SLUG);
   if (!data) redirect("/");
 
   const { certification, readiness, recentAttempts, streak, inProgress } = data;
-  const firstName = session.user.name?.split(" ")[0] ?? "there";
   const weakest = weakestDomain(readiness);
   const gap = pointsToPass(readiness);
 
@@ -33,7 +32,7 @@ export default async function DashboardPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="tick">{certification.code}</span>
-            <h1 className="font-display mt-2 text-3xl">Welcome back, {firstName}</h1>
+            <h1 className="font-display mt-2 text-3xl">Welcome back</h1>
           </div>
           <StartPracticeButton certSlug={certification.slug} questionCount={10}>
             Start practice
@@ -174,44 +173,7 @@ export default async function DashboardPage() {
 
             <section className="border-hairline bg-raise mt-8 rounded-lg border p-6">
               <h2 className="tick mb-5">Recent attempts</h2>
-              {/* The table scrolls inside its own container so the page body
-                  never scrolls horizontally on a narrow screen. */}
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[26rem] text-sm">
-                  <thead>
-                    <tr className="border-hairline text-graphite border-b text-left">
-                      <th className="pb-2 font-normal">Date</th>
-                      <th className="pb-2 font-normal">Questions</th>
-                      <th className="pb-2 font-normal">Accuracy</th>
-                      <th className="pb-2 text-right font-normal">Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentAttempts.map((attempt) => (
-                      <tr key={attempt.id} className="border-hairline/60 border-b last:border-0">
-                        <td className="py-3">
-                          <Link
-                            href={`/c/${certification.slug}/practice/${attempt.id}/results`}
-                            className="hover:text-gate underline-offset-2 hover:underline"
-                          >
-                            {attempt.completedAt?.toLocaleDateString("en-GB", {
-                              day: "numeric",
-                              month: "short",
-                            })}
-                          </Link>
-                        </td>
-                        <td className="tabular py-3">{attempt.questionCount}</td>
-                        <td className="tabular py-3">
-                          {attempt.correctCount ?? 0}/{attempt.questionCount}
-                        </td>
-                        <td className="tabular py-3 text-right font-bold">
-                          {attempt.scaledScore ?? "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <AttemptHistoryTable attempts={recentAttempts} certSlug={certification.slug} />
             </section>
           </>
         )}

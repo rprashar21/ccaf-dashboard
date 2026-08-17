@@ -93,10 +93,10 @@ export default async function LandingPage() {
                   Answer one question
                 </a>
                 <Link
-                  href="/signin"
+                  href="/dashboard"
                   className="border-hairline bg-raise hover:border-graphite rounded-md border px-5 py-3 font-semibold"
                 >
-                  Sign in with GitHub
+                  Continue as guest
                 </Link>
               </div>
 
@@ -265,10 +265,10 @@ export default async function LandingPage() {
         <Section tick="Start">
           <h2 className="font-display text-2xl">Move the number off zero</h2>
           <Link
-            href="/signin"
+            href="/dashboard"
             className="bg-gate hover:bg-gate/90 mt-6 inline-block rounded-md px-6 py-3 font-semibold text-white"
           >
-            Sign in
+            Continue as guest
           </Link>
         </Section>
       </main>

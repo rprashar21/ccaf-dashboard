@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getGuestUserId } from "@/lib/guest";
 import { Nav } from "@/components/Nav";
 import { QuestionRunner } from "./_components/QuestionRunner";
 
@@ -14,13 +14,10 @@ export default async function AttemptPage({
 }) {
   const { certSlug, attemptId } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect(`/signin?callbackUrl=/c/${certSlug}/practice/${attemptId}`);
-  }
+  const userId = await getGuestUserId();
 
   const attempt = await db.quizAttempt.findFirst({
-    where: { id: attemptId, userId: session.user.id },
+    where: { id: attemptId, userId },
     include: {
       certification: { select: { slug: true } },
       responses: { select: { questionId: true } },

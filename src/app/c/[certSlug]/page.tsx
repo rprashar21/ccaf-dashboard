@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { Footer, Nav } from "@/components/Nav";
 import { getCertification, getPublishedQuestionCount } from "@/server/queries/certifications";
 
@@ -30,14 +29,11 @@ export default async function CertificationPage({
   const certification = await getCertification(certSlug);
   if (!certification) notFound();
 
-  const [session, questionCount] = await Promise.all([
-    auth(),
-    getPublishedQuestionCount(certification.id),
-  ]);
+  const questionCount = await getPublishedQuestionCount(certification.id);
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Nav signedIn={Boolean(session?.user)} />
+      <Nav signedIn />
 
       <main className="mx-auto w-full max-w-4xl flex-1 px-6 py-12">
         <span className="tick">{certification.vendor}</span>

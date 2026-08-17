@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getGuestUserId } from "@/lib/guest";
 import { Footer, Nav } from "@/components/Nav";
 import { ReadinessRail } from "@/components/ReadinessRail";
 
@@ -15,13 +15,10 @@ export default async function ResultsPage({
 }) {
   const { certSlug, attemptId } = await params;
 
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect(`/signin?callbackUrl=/c/${certSlug}/practice/${attemptId}/results`);
-  }
+  const userId = await getGuestUserId();
 
   const attempt = await db.quizAttempt.findFirst({
-    where: { id: attemptId, userId: session.user.id },
+    where: { id: attemptId, userId },
     include: {
       certification: true,
       domainResults: { include: { domain: true } },

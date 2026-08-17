@@ -23,6 +23,9 @@ export function Nav({ signedIn = false }: { signedIn?: boolean }) {
               <Link href="/c/cca-f/practice" className="text-graphite hover:text-ink text-sm">
                 Practice
               </Link>
+              <Link href="/profile" className="text-graphite hover:text-ink text-sm">
+                Profile
+              </Link>
             </>
           ) : (
             <>

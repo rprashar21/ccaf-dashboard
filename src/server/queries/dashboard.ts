@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { READINESS_DEFAULTS } from "@/lib/scoring/constants";
-import { calculateReadiness, type DomainTally } from "@/lib/scoring/readiness";
+import { calculateReadiness } from "@/lib/scoring/readiness";
 import { calculateStreak } from "@/lib/streak";
+import { getDomainTallies } from "@/server/queries/domainTallies";
 
 /**
  * Everything the dashboard renders, in one place.
@@ -20,16 +21,8 @@ export async function getDashboardData(userId: string, certSlug: string) {
 
   const since = new Date(Date.now() - READINESS_DEFAULTS.windowDays * 24 * 60 * 60 * 1000);
 
-  const [responses, recentAttempts, completedDays, inProgress] = await Promise.all([
-    db.questionResponse.findMany({
-      where: {
-        userId,
-        answeredAt: { gte: since },
-        question: { certificationId: certification.id },
-      },
-      orderBy: { answeredAt: "desc" },
-      select: { questionId: true, domainId: true, isCorrect: true, answeredAt: true },
-    }),
+  const [tallies, recentAttempts, completedDays, inProgress] = await Promise.all([
+    getDomainTallies(userId, certification, since),
     db.quizAttempt.findMany({
       where: { userId, certificationId: certification.id, status: "COMPLETED" },
       orderBy: { completedAt: "desc" },
@@ -54,37 +47,6 @@ export async function getDashboardData(userId: string, certSlug: string) {
       select: { id: true, questionCount: true },
     }),
   ]);
-
-  // Keep only the latest response per question.
-  const latest = new Map<string, { domainId: string; isCorrect: boolean }>();
-  for (const response of responses) {
-    if (!latest.has(response.questionId)) {
-      latest.set(response.questionId, {
-        domainId: response.domainId,
-        isCorrect: response.isCorrect,
-      });
-    }
-  }
-
-  const tallyByDomain = new Map<string, { answered: number; correct: number }>();
-  for (const { domainId, isCorrect } of latest.values()) {
-    const tally = tallyByDomain.get(domainId) ?? { answered: 0, correct: 0 };
-    tally.answered += 1;
-    if (isCorrect) tally.correct += 1;
-    tallyByDomain.set(domainId, tally);
-  }
-
-  const tallies: DomainTally[] = certification.domains.map((domain) => {
-    const tally = tallyByDomain.get(domain.id) ?? { answered: 0, correct: 0 };
-    return {
-      domainId: domain.id,
-      slug: domain.slug,
-      name: domain.name,
-      weight: Number(domain.weight),
-      answered: tally.answered,
-      correct: tally.correct,
-    };
-  });
 
   const readiness = calculateReadiness({
     domains: tallies,

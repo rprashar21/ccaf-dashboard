@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { Footer, Nav } from "@/components/Nav";
 import { getCertification } from "@/server/queries/certifications";
@@ -29,14 +28,13 @@ export default async function DomainPage({
   const domain = certification?.domains.find((d) => d.slug === domainSlug);
   if (!certification || !domain) notFound();
 
-  const [session, questionCount] = await Promise.all([
-    auth(),
-    db.question.count({ where: { domainId: domain.id, status: "PUBLISHED" } }),
-  ]);
+  const questionCount = await db.question.count({
+    where: { domainId: domain.id, status: "PUBLISHED" },
+  });
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Nav signedIn={Boolean(session?.user)} />
+      <Nav signedIn />
 
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-12">
         <Link href={`/c/${certSlug}`} className="tick hover:text-ink">
@@ -55,7 +53,7 @@ export default async function DomainPage({
           {questionCount === 1 ? "" : "s"} in this domain.
         </p>
 
-        {session?.user && questionCount > 0 ? (
+        {questionCount > 0 ? (
           <div className="mt-6">
             <StartPracticeButton
               certSlug={certSlug}

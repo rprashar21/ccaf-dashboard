@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { notFound } from "next/navigation";
 import { Footer, Nav } from "@/components/Nav";
 import { getCertification } from "@/server/queries/certifications";
 import { StartPracticeButton } from "@/app/dashboard/_components/StartPracticeButton";
@@ -13,9 +12,6 @@ export default async function PracticeConfigPage({
   params: Promise<{ certSlug: string }>;
 }) {
   const { certSlug } = await params;
-
-  const session = await auth();
-  if (!session?.user?.id) redirect(`/signin?callbackUrl=/c/${certSlug}/practice`);
 
   const certification = await getCertification(certSlug);
   if (!certification) notFound();

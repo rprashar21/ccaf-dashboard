@@ -3,17 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { gradeResponse } from "@/lib/quiz/grade";
 import { selectQuestions, type Candidate } from "@/lib/quiz/selectQuestions";
 import { calculateReadiness, type DomainTally } from "@/lib/scoring/readiness";
-
-async function requireUser() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/signin");
-  return session.user.id;
-}
+import { getGuestUserId } from "@/lib/guest";
 
 const startSchema = z.object({
   certSlug: z.string().min(1),
@@ -23,7 +17,7 @@ const startSchema = z.object({
 });
 
 export async function startAttempt(input: z.infer<typeof startSchema>) {
-  const userId = await requireUser();
+  const userId = await getGuestUserId();
   const { certSlug, mode, questionCount, domainId } = startSchema.parse(input);
 
   const certification = await db.certification.findFirst({
@@ -125,7 +119,7 @@ export type SubmitResult = {
 };
 
 export async function submitResponse(input: z.infer<typeof submitSchema>): Promise<SubmitResult> {
-  const userId = await requireUser();
+  const userId = await getGuestUserId();
   const { attemptId, questionId, selectedOptionIds, timeSpentSeconds } = submitSchema.parse(input);
 
   const attempt = await db.quizAttempt.findFirst({
@@ -180,7 +174,7 @@ export async function submitResponse(input: z.infer<typeof submitSchema>): Promi
 const finishSchema = z.object({ attemptId: z.string().min(1) });
 
 export async function finishAttempt(input: z.infer<typeof finishSchema>) {
-  const userId = await requireUser();
+  const userId = await getGuestUserId();
   const { attemptId } = finishSchema.parse(input);
 
   const attempt = await db.quizAttempt.findFirst({
@@ -261,7 +255,7 @@ export async function finishAttempt(input: z.infer<typeof finishSchema>) {
 }
 
 export async function abandonAttempt(input: z.infer<typeof finishSchema>) {
-  const userId = await requireUser();
+  const userId = await getGuestUserId();
   const { attemptId } = finishSchema.parse(input);
 
   await db.quizAttempt.updateMany({
