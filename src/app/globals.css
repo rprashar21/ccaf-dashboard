@@ -16,7 +16,10 @@
   --color-hairline: #cfd6e0;
   --color-gate: #1f49d6;
   --color-gate-soft: #dbe3fb;
-  --color-under: #c2760f;
+  /* Darkened from a mid amber so it clears WCAG AA (4.5:1) as small text on
+     white, on the page ground, and on its own soft tint. It is used for
+     "Missed" and "Provisional estimate" labels, not just for bar fills. */
+  --color-under: #9a5c06;
   --color-under-soft: #fbeeda;
 
   --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;

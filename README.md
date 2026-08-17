@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Readiness
 
-## Getting Started
+Certification prep for the Anthropic **Claude Certified Architect — Foundations (CCA-F)** exam:
+practice questions, a per-domain breakdown, and an estimated score on the exam's own
+1000-point scale.
 
-First, run the development server:
+An independent study tool. Not affiliated with, endorsed by, or produced by Anthropic.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
+> **Verify the exam facts before going public.** The question count, duration, pass mark, and
+> domain weights come from a third-party prep guide, not from published Anthropic material.
+> They are stored as data (`prisma/seed/certifications/cca-f.json`), never hardcoded, so a
+> correction is a seed edit rather than a code change.
+
+## Getting started
+
+```sh
+pnpm install
+cp .env.example .env          # then set AUTH_SECRET: pnpm dlx auth secret
+pnpm db:up                    # Postgres 16 in Docker
+pnpm prisma migrate deploy
+pnpm db:seed                  # CCA-F: 4 domains, 18 subtopics, 40 questions
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+OAuth credentials are optional in development — migrations, the seed, the test suite, and the
+public pages all work without them. Sign-in needs a GitHub and/or Google OAuth app; callback
+URL `http://localhost:3000/api/auth/callback/<provider>`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`pnpm db:demo` seeds a demo learner with completed attempts so the dashboard has data to render.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Command                                             | What it does                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------- |
+| `pnpm dev` / `pnpm build`                           | Next.js dev server / production build                               |
+| `pnpm test`                                         | Vitest unit tests (scoring, grading, selection, streaks, callbacks) |
+| `pnpm typecheck` `pnpm lint` `pnpm format`          | TypeScript, ESLint, Prettier                                        |
+| `pnpm db:up` / `pnpm db:down`                       | Start / stop Postgres                                               |
+| `pnpm db:migrate` / `pnpm db:seed` / `pnpm db:demo` | Migrate, seed content, seed a demo user                             |
+| `pnpm db:studio`                                    | Prisma Studio                                                       |
 
-To learn more about Next.js, take a look at the following resources:
+## How the readiness score works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Per domain, accuracy is pulled toward a neutral 0.5 prior using beta-binomial shrinkage
+(`k = 8`), so a handful of lucky answers cannot manufacture a passing estimate. Those values are
+weighted by each domain's share of the exam and scaled to 1000. Only the most recent response
+per question inside a 90-day window counts, so re-answering something you previously missed
+actually moves the number.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Coverage (answers per domain, capped at 15) produces a confidence band. **Below MEDIUM
+confidence no pass/fail verdict is shown at all** — an estimate built on thin evidence should
+not tell someone they would pass.
 
-## Deploy on Vercel
+The algorithm is pure and lives in `src/lib/scoring/readiness.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Layout
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+prisma/            schema, migrations, and JSON seed data
+src/app/           routes: marketing (/), auth, dashboard, /c/[certSlug]/...
+src/components/    shared UI, including the readiness rail used by hero and dashboard
+src/lib/           scoring, grading, question selection, auth config, validation
+src/server/        server actions and query modules
+```
+
+`/dashboard` is certification-agnostic; everything certification-specific lives under
+`/c/[certSlug]/`. That is the whole multi-certification accommodation — the platform is
+intended to cover more exams than this one.
+
+## Not in this phase
+
+Coding exercises and the sandbox, PDF/URL ingestion into draft questions, the moderation queue,
+timed exam mode with a server-authoritative countdown, spaced repetition, and any second
+certification. The schema already carries the enum values and nullable columns those need, so
+they slot in without a rewrite.

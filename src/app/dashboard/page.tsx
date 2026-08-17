@@ -174,40 +174,44 @@ export default async function DashboardPage() {
 
             <section className="border-hairline bg-raise mt-8 rounded-lg border p-6">
               <h2 className="tick mb-5">Recent attempts</h2>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-hairline text-graphite border-b text-left">
-                    <th className="pb-2 font-normal">Date</th>
-                    <th className="pb-2 font-normal">Questions</th>
-                    <th className="pb-2 font-normal">Accuracy</th>
-                    <th className="pb-2 text-right font-normal">Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentAttempts.map((attempt) => (
-                    <tr key={attempt.id} className="border-hairline/60 border-b last:border-0">
-                      <td className="py-3">
-                        <Link
-                          href={`/c/${certification.slug}/practice/${attempt.id}/results`}
-                          className="hover:text-gate underline-offset-2 hover:underline"
-                        >
-                          {attempt.completedAt?.toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </Link>
-                      </td>
-                      <td className="tabular py-3">{attempt.questionCount}</td>
-                      <td className="tabular py-3">
-                        {attempt.correctCount ?? 0}/{attempt.questionCount}
-                      </td>
-                      <td className="tabular py-3 text-right font-bold">
-                        {attempt.scaledScore ?? "—"}
-                      </td>
+              {/* The table scrolls inside its own container so the page body
+                  never scrolls horizontally on a narrow screen. */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[26rem] text-sm">
+                  <thead>
+                    <tr className="border-hairline text-graphite border-b text-left">
+                      <th className="pb-2 font-normal">Date</th>
+                      <th className="pb-2 font-normal">Questions</th>
+                      <th className="pb-2 font-normal">Accuracy</th>
+                      <th className="pb-2 text-right font-normal">Score</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {recentAttempts.map((attempt) => (
+                      <tr key={attempt.id} className="border-hairline/60 border-b last:border-0">
+                        <td className="py-3">
+                          <Link
+                            href={`/c/${certification.slug}/practice/${attempt.id}/results`}
+                            className="hover:text-gate underline-offset-2 hover:underline"
+                          >
+                            {attempt.completedAt?.toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </Link>
+                        </td>
+                        <td className="tabular py-3">{attempt.questionCount}</td>
+                        <td className="tabular py-3">
+                          {attempt.correctCount ?? 0}/{attempt.questionCount}
+                        </td>
+                        <td className="tabular py-3 text-right font-bold">
+                          {attempt.scaledScore ?? "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           </>
         )}
