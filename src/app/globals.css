@@ -1,26 +1,89 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Instrument panel, not warm paper. The subject is a threshold — a number out of
+  1000 with a hard gate at 720 — so the palette is two-state by design: an
+  engineering blue for the gate and the pass state, amber for below it. Blue and
+  amber is a real instrument pairing (nominal vs. warning), and it encodes the
+  pass/fail semantics rather than picking a decorative brand accent.
+*/
+
+@theme {
+  --color-ground: #e9edf2;
+  --color-raise: #ffffff;
+  --color-ink: #0e1319;
+  --color-graphite: #5b6675;
+  --color-hairline: #cfd6e0;
+  --color-gate: #1f49d6;
+  --color-gate-soft: #dbe3fb;
+  --color-under: #c2760f;
+  --color-under-soft: #fbeeda;
+
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-source-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display face: wide and engineered. Carries structure, used with restraint. */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+/* Numbers that update must not jitter. */
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* The structural device: mono tick labels in the left gutter, reusing the
+   hero rail's vocabulary. Ticks encode measurement, which is true to the
+   content — unlike decorative 01/02/03 numbering, since the sections of this
+   page are not a sequence. */
+.tick {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-graphite);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gate);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Hatch fill for a domain with too little data to report a percentage. */
+.hatched {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-hairline) 0 2px,
+    transparent 2px 6px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
