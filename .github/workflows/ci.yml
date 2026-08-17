@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ccaf
+          POSTGRES_PASSWORD: ccaf
+          POSTGRES_DB: ccaf
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ccaf -d ccaf"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://ccaf:ccaf@localhost:5432/ccaf?schema=public
+      # Dummy values: the build must not require real OAuth credentials.
+      AUTH_SECRET: ci-placeholder-secret-not-used-for-anything-real
+      AUTH_GITHUB_ID: ci-placeholder
+      AUTH_GITHUB_SECRET: ci-placeholder
+      AUTH_GOOGLE_ID: ci-placeholder
+      AUTH_GOOGLE_SECRET: ci-placeholder
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      # Prisma 7 does not support Node 25; pin to the current LTS.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Validate Prisma schema
+        run: pnpm prisma validate
+
+      - name: Generate Prisma client
+        run: pnpm prisma generate
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      # Proves migrations apply to an empty database and the seed data validates.
+      - name: Migrate and seed
+        run: |
+          pnpm prisma migrate deploy
+          pnpm db:seed
+
+      - name: Build
+        run: pnpm build

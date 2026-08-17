@@ -1,0 +1,357 @@
+// Certification prep platform.
+//
+// Everything is scoped to a Certification. CCA-F is the first one seeded, but no
+// exam fact (question count, duration, pass mark, domain weights) is hardcoded in
+// application code — they are all columns on Certification and Domain, seeded from
+// JSON, because they came from a third-party prep guide and will need correcting.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth (Auth.js Prisma adapter)
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  LEARNER
+  REVIEWER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          UserRole  @default(LEARNER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts          Account[]
+  sessions          Session[]
+  attempts          QuizAttempt[]
+  responses         QuestionResponse[]
+  authoredQuestions Question[]         @relation("QuestionAuthor")
+  reviewedQuestions Question[]         @relation("QuestionReviewer")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
+model Certification {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  code        String
+  name        String
+  vendor      String
+  description String  @db.Text
+
+  // Exam facts. Data, not constants — see the note at the top of this file.
+  examQuestionCount    Int
+  examDurationMinutes  Int
+  passingScore         Int
+  scoreScaleMax        Int
+
+  // Provenance of the facts above, rendered in the UI as a caveat.
+  sourceNote String? @db.Text
+
+  isPublished Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  domains   Domain[]
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Domain {
+  id              String @id @default(cuid())
+  certificationId String
+  slug            String
+  name            String
+  description     String @db.Text
+
+  // Decimal, not Float, so a set of weights sums exactly.
+  weight    Decimal @db.Decimal(5, 4)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  certification Certification         @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  subtopics     Subtopic[]
+  questions     Question[]
+  responses     QuestionResponse[]
+  attemptResults AttemptDomainResult[]
+  filteredAttempts QuizAttempt[]      @relation("AttemptDomainFilter")
+
+  @@unique([certificationId, slug])
+  @@index([certificationId, sortOrder])
+}
+
+model Subtopic {
+  id       String @id @default(cuid())
+  domainId String
+  slug     String
+  name     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  domain    Domain             @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  questions QuestionSubtopic[]
+
+  @@unique([domainId, slug])
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  MULTIPLE_SELECT
+  CODING_EXERCISE
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+  REJECTED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionSource {
+  SEED
+  MANUAL
+  INGESTED
+}
+
+model Question {
+  id              String @id @default(cuid())
+  certificationId String
+  domainId        String
+
+  type       QuestionType   @default(MULTIPLE_CHOICE)
+  status     ContentStatus  @default(DRAFT)
+  difficulty Difficulty     @default(MEDIUM)
+  sourceType QuestionSource @default(SEED)
+
+  stem         String  @db.Text
+  explanation  String  @db.Text
+  referenceUrl String?
+
+  // Stable identity across re-seeds. externalId is authored in the seed JSON;
+  // checksum is a content hash the phase-3 ingestion agent uses to dedupe.
+  externalId String  @unique
+  checksum   String?
+  version    Int     @default(1)
+
+  // Phase 3 (ingestion) and phase 4 (coding exercises) attach here without a
+  // schema rewrite: the enum values and these nullable columns already exist.
+  sourceDocumentId String?
+  codingExerciseId String?
+
+  createdById String?
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  certification Certification      @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  domain        Domain             @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  createdBy     User?              @relation("QuestionAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedBy    User?              @relation("QuestionReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  options       QuestionOption[]
+  subtopics     QuestionSubtopic[]
+  attemptSlots  QuizAttemptQuestion[]
+  responses     QuestionResponse[]
+
+  @@index([certificationId, status])
+  @@index([domainId, status, difficulty])
+}
+
+model QuestionOption {
+  id         String  @id @default(cuid())
+  questionId String
+  label      String
+  body       String  @db.Text
+  // Correctness lives on the option, not on Question. That is what lets
+  // MULTIPLE_SELECT work with no schema change.
+  isCorrect  Boolean @default(false)
+  sortOrder  Int     @default(0)
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, label])
+  @@index([questionId])
+}
+
+model QuestionSubtopic {
+  questionId String
+  subtopicId String
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  subtopic Subtopic @relation(fields: [subtopicId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, subtopicId])
+  @@index([subtopicId])
+}
+
+// ---------------------------------------------------------------------------
+// Attempts
+// ---------------------------------------------------------------------------
+
+enum AttemptMode {
+  PRACTICE
+  TIMED_EXAM
+  DOMAIN_DRILL
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model QuizAttempt {
+  id              String @id @default(cuid())
+  userId          String
+  certificationId String
+
+  mode   AttemptMode
+  status AttemptStatus @default(IN_PROGRESS)
+
+  questionCount    Int
+  domainFilterId   String?
+  timeLimitSeconds Int?
+
+  startedAt       DateTime  @default(now())
+  completedAt     DateTime?
+  durationSeconds Int?
+
+  // Written once at finish so history and results pages are a single cheap read.
+  correctCount Int?
+  rawAccuracy  Decimal? @db.Decimal(5, 4)
+  scaledScore  Int?
+  passed       Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certification Certification         @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  domainFilter  Domain?               @relation("AttemptDomainFilter", fields: [domainFilterId], references: [id], onDelete: SetNull)
+  slots         QuizAttemptQuestion[]
+  responses     QuestionResponse[]
+  domainResults AttemptDomainResult[]
+
+  @@index([userId, certificationId, completedAt])
+  @@index([userId, status])
+}
+
+// The ordered slate of questions, snapshotted when the attempt starts. Makes the
+// runner resumable and stops an in-flight attempt changing if a question is
+// archived mid-run.
+model QuizAttemptQuestion {
+  id         String @id @default(cuid())
+  attemptId  String
+  questionId String
+  position   Int
+
+  attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@unique([attemptId, position])
+}
+
+model QuestionResponse {
+  id         String @id @default(cuid())
+  attemptId  String
+  questionId String
+
+  // userId and domainId are denormalized so the readiness query never has to
+  // join through Question.
+  userId   String
+  domainId String
+
+  selectedOptionIds String[]
+  isCorrect         Boolean
+  timeSpentSeconds  Int?
+  answeredAt        DateTime @default(now())
+
+  attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  domain   Domain      @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([userId, domainId, answeredAt])
+}
+
+model AttemptDomainResult {
+  attemptId String
+  domainId  String
+  answered  Int
+  correct   Int
+
+  attempt QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  domain  Domain      @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  @@id([attemptId, domainId])
+}

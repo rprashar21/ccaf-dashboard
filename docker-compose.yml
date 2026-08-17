@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ccaf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ccaf
+      POSTGRES_PASSWORD: ccaf
+      POSTGRES_DB: ccaf
+    ports:
+      - "5432:5432"
+    volumes:
+      - ccaf-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ccaf -d ccaf"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ccaf-pgdata:

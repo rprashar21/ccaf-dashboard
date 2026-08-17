@@ -1,0 +1,65 @@
+{
+  "slug": "cca-f",
+  "code": "CCA-F",
+  "name": "Claude Certified Architect — Foundations",
+  "vendor": "Anthropic",
+  "description": "Foundations-level certification covering agentic architecture, tool design and the Model Context Protocol, prompt engineering and context management, and Claude Code configuration and workflows.",
+  "examQuestionCount": 60,
+  "examDurationMinutes": 120,
+  "passingScore": 720,
+  "scoreScaleMax": 1000,
+  "sourceNote": "Exam format and domain weights are taken from a third-party prep guide, not from published Anthropic material. Verify against official certification documentation before relying on them.",
+  "isPublished": true,
+  "domains": [
+    {
+      "slug": "agentic-architecture",
+      "name": "Agentic Architecture & Orchestration",
+      "description": "How an agent gathers context, acts, and verifies results, and how work is decomposed across one or many agents.",
+      "weight": 0.27,
+      "subtopics": [
+        { "slug": "agentic-loop", "name": "The agentic loop" },
+        { "slug": "task-decomposition", "name": "Sequential vs. parallel decomposition" },
+        { "slug": "multi-agent-topologies", "name": "Multi-agent topologies" },
+        { "slug": "subagent-orchestration", "name": "Dynamic planning and subagent orchestration" }
+      ]
+    },
+    {
+      "slug": "tool-design-mcp",
+      "name": "Tool Design & Model Context Protocol",
+      "description": "The tool use API, MCP server and client architecture, and what separates a tool definition a model can use from one it cannot.",
+      "weight": 0.25,
+      "subtopics": [
+        { "slug": "tool-use-api", "name": "Tool use API and stop reasons" },
+        { "slug": "mcp-architecture", "name": "MCP server/client architecture" },
+        { "slug": "mcp-primitives", "name": "Resources and prompts" },
+        { "slug": "tool-schemas", "name": "Names, descriptions, and input schemas" },
+        { "slug": "tool-errors", "name": "Error handling in tool results" }
+      ]
+    },
+    {
+      "slug": "prompting-context",
+      "name": "Prompt Engineering & Context Management",
+      "description": "Structuring system prompts, getting reliable structured output, review loops, and working within a finite context window.",
+      "weight": 0.25,
+      "subtopics": [
+        { "slug": "system-prompts", "name": "System prompt structure and XML tagging" },
+        { "slug": "structured-output", "name": "Structured JSON output" },
+        { "slug": "review-loops", "name": "Multi-pass review and self-critique" },
+        { "slug": "large-context", "name": "Summarization, chunking, and retrieval" }
+      ]
+    },
+    {
+      "slug": "claude-code",
+      "name": "Claude Code Configuration & Workflows",
+      "description": "Configuring Claude Code and the Agent SDK: memory files, hooks, permissions, slash commands, and MCP integration.",
+      "weight": 0.23,
+      "subtopics": [
+        { "slug": "claude-md", "name": "CLAUDE.md and project memory" },
+        { "slug": "hooks", "name": "Hooks" },
+        { "slug": "permissions", "name": "Permission settings" },
+        { "slug": "agent-sdk", "name": "Claude Agent SDK and subagents" },
+        { "slug": "slash-commands", "name": "Slash commands and MCP integration" }
+      ]
+    }
+  ]
+}

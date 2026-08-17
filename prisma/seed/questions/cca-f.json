@@ -1,0 +1,968 @@
+{
+  "certificationSlug": "cca-f",
+  "questions": [
+    {
+      "externalId": "cca-f-agentic-001",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["agentic-loop"],
+      "difficulty": "EASY",
+      "stem": "What are the three phases of the agentic loop?",
+      "explanation": "The agentic loop is: gather context, take action, verify results. The verification phase is what separates an agent from a single model call. Without it the agent cannot tell whether its action worked, so it cannot correct course on the next iteration.",
+      "options": [
+        { "label": "A", "body": "Gather context, take action, verify results", "isCorrect": true },
+        { "label": "B", "body": "Plan, execute, report", "isCorrect": false },
+        { "label": "C", "body": "Prompt, sample, decode", "isCorrect": false },
+        { "label": "D", "body": "Retrieve, rank, generate", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-002",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["agentic-loop"],
+      "difficulty": "MEDIUM",
+      "stem": "An agent completes a code edit and immediately reports success without running the test suite. Which phase of the agentic loop is missing?",
+      "explanation": "Verification is the missing phase. Taking the action (the edit) is not evidence the action achieved the goal. A verification step, such as running tests or re-reading the changed file, produces the observation the next loop iteration needs in order to self-correct.",
+      "options": [
+        { "label": "A", "body": "Verify results", "isCorrect": true },
+        { "label": "B", "body": "Gather context", "isCorrect": false },
+        { "label": "C", "body": "Take action", "isCorrect": false },
+        { "label": "D", "body": "Tokenize the prompt", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-003",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["task-decomposition"],
+      "difficulty": "MEDIUM",
+      "stem": "You must review twelve independent files for the same class of bug. Which decomposition fits best?",
+      "explanation": "The twelve reviews share no data and no ordering constraint, so they are independent subtasks that can run concurrently. Wall-clock time becomes the slowest single review rather than the sum of all twelve. Sequential execution would be correct only if each review's output fed the next.",
+      "options": [
+        { "label": "A", "body": "Parallel execution, one subtask per file", "isCorrect": true },
+        {
+          "label": "B",
+          "body": "Strictly sequential execution, one file per turn",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "A single call containing all twelve files concatenated",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "Recursive decomposition until each subtask is a single line of code",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-004",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["task-decomposition"],
+      "difficulty": "MEDIUM",
+      "stem": "In a fan-out then aggregate workflow, what does adding a barrier between stages cost you?",
+      "explanation": "A barrier waits for every subtask in a stage before any subtask advances, so the stage takes as long as its slowest member and fast workers sit idle. It is justified only when the next stage genuinely needs cross-item context, such as deduplicating across the whole result set.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Wall-clock time, because fast subtasks idle until the slowest one finishes",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Correctness, because results arrive out of order",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "Nothing measurable; barriers are free", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "Token cost, because a barrier re-sends the full conversation",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-005",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["multi-agent-topologies"],
+      "difficulty": "MEDIUM",
+      "stem": "Which description matches a hub-and-spoke (orchestrator-worker) multi-agent topology?",
+      "explanation": "In hub-and-spoke a single coordinator decomposes the work, dispatches subtasks to workers, and integrates their reports. Workers do not talk to each other, which keeps the coordination logic in one place at the cost of making the hub a bottleneck.",
+      "options": [
+        {
+          "label": "A",
+          "body": "A central coordinator delegates subtasks to workers and integrates their results; workers do not communicate with each other",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Each agent passes its output to the next agent in a fixed chain",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Every agent broadcasts to every other agent with no coordinator",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "A single agent calls itself recursively with a smaller context each time",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-006",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["multi-agent-topologies"],
+      "difficulty": "EASY",
+      "stem": "Which topology is described by: each stage transforms the output of the previous stage in a fixed order?",
+      "explanation": "That is a pipeline. Order carries meaning because each stage consumes what the previous stage produced. Hub-and-spoke and swarm differ in that neither imposes a fixed sequential dependency between the participating agents.",
+      "options": [
+        { "label": "A", "body": "Pipeline", "isCorrect": true },
+        { "label": "B", "body": "Hub-and-spoke", "isCorrect": false },
+        { "label": "C", "body": "Swarm", "isCorrect": false },
+        { "label": "D", "body": "Star broadcast", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-007",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["subagent-orchestration"],
+      "difficulty": "MEDIUM",
+      "stem": "What is the primary context-management benefit of delegating a research subtask to a subagent?",
+      "explanation": "A subagent runs in its own context window. It can read a large volume of material and return only a short report, so the orchestrator's context absorbs the conclusion rather than all the raw material. That is what makes fan-out viable on tasks too large for one window.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The subagent reads the bulk material in its own context and returns only a summary, so the orchestrator's context stays small",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "The subagent shares the orchestrator's context window, so no tokens are duplicated",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "Subagent tokens are not billed", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "The subagent can exceed the model's maximum context window",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-008",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["subagent-orchestration"],
+      "difficulty": "HARD",
+      "stem": "A subagent must act on a file the orchestrator discovered earlier in its own conversation. What must the orchestrator do?",
+      "explanation": "Subagents do not inherit the orchestrator's conversation history. Anything the subagent needs, such as file paths, constraints, or the expected report format, has to be stated explicitly in the delegated task. Assuming shared context is the most common cause of a subagent doing the wrong work.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Include the file path and relevant constraints explicitly in the delegated task description",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Nothing; subagents automatically inherit the orchestrator's conversation history",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Raise the subagent's temperature so it explores the filesystem",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "Re-run the orchestrator's own turns inside the subagent before delegating",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-009",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["subagent-orchestration", "task-decomposition"],
+      "difficulty": "HARD",
+      "stem": "Which task is the weakest candidate for delegation to a subagent?",
+      "explanation": "Delegation costs a round trip plus a re-briefing: the subagent re-establishes context, does the work, reports back, and the orchestrator reads the report. A task the orchestrator could finish in two or three tool calls is cheaper and faster done directly.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Reading one known file and changing a single line in it",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Auditing an unfamiliar subsystem spread across many directories",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Researching five independent questions that each require extensive reading",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "Reviewing a large diff from three distinct perspectives in parallel",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-010",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["agentic-loop"],
+      "difficulty": "HARD",
+      "stem": "An agent loops indefinitely: it edits a file, the test fails, it reverts, the test fails differently, and it repeats. Which intervention most directly addresses the failure mode?",
+      "explanation": "The loop lacks a termination condition. Bounding iterations, or escalating to a human after N failed verification cycles, converts an unbounded loop into one that either succeeds or reports a clear failure. Adding urgency to the prompt does not create a stopping rule.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Add an explicit iteration budget and escalate to a human when it is exhausted",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Add 'CRITICAL: do not loop forever' to the system prompt",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Remove the verification step so the agent stops noticing failures",
+          "isCorrect": false
+        },
+        { "label": "D", "body": "Increase the maximum output tokens per turn", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-agentic-011",
+      "domainSlug": "agentic-architecture",
+      "subtopicSlugs": ["task-decomposition", "agentic-loop"],
+      "difficulty": "MEDIUM",
+      "stem": "Which factor most strongly argues against building an agent and in favour of a single model call?",
+      "explanation": "Agents pay for their flexibility in latency, tokens, and unpredictability. When the task is fully specifiable in advance, a single call or a fixed workflow gives the same result more cheaply and more predictably. Reach for an agent when the steps genuinely cannot be enumerated up front.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The task is fully specifiable in advance and always takes the same steps",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "The task is open-ended and the required steps depend on what is discovered along the way",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "Errors are cheap to detect and recover from", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "The outcome is valuable enough to justify higher latency",
+          "isCorrect": false
+        }
+      ]
+    },
+
+    {
+      "externalId": "cca-f-tools-001",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-use-api"],
+      "difficulty": "EASY",
+      "stem": "Which stop reason indicates that Claude wants the caller to execute a tool and return the result?",
+      "explanation": "`tool_use` means the response contains one or more tool_use blocks and the model is waiting for matching tool_result blocks before it can continue. `end_turn` means the model finished on its own and expects no tool execution.",
+      "options": [
+        { "label": "A", "body": "tool_use", "isCorrect": true },
+        { "label": "B", "body": "end_turn", "isCorrect": false },
+        { "label": "C", "body": "max_tokens", "isCorrect": false },
+        { "label": "D", "body": "stop_sequence", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-002",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-use-api"],
+      "difficulty": "MEDIUM",
+      "stem": "A single assistant response contains three tool_use blocks. How should the results be returned?",
+      "explanation": "All three tool_result blocks belong in one user message. Splitting them across several messages breaks the pairing the API expects and, in practice, discourages the model from requesting parallel tool calls in future turns. Each tool_result must carry the matching tool_use_id.",
+      "options": [
+        {
+          "label": "A",
+          "body": "As three tool_result blocks inside a single user message",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "As three separate user messages, one per result",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "As a single tool_result whose content concatenates all three outputs",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "As an assistant message summarizing the three outputs",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-003",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-errors"],
+      "difficulty": "MEDIUM",
+      "stem": "A tool raises an exception during execution. What is the correct way to report this back to the model?",
+      "explanation": "Return a tool_result for that tool_use_id with `is_error` set to true and an informative message. The model can then adapt, retry differently, or ask for clarification. Dropping the result entirely leaves an unmatched tool_use block and stalls the conversation.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Return a tool_result with is_error set to true and a message describing what failed",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Omit the tool_result for that call and continue",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Return an empty tool_result so the model retries automatically",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "Raise the exception to the end user and abandon the conversation",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-004",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-schemas"],
+      "difficulty": "MEDIUM",
+      "stem": "Which change to a tool definition most reliably improves how often the model calls it at the right moment?",
+      "explanation": "The description is the model's only guide to when a tool applies. Stating the trigger condition, not just what the tool does, gives measurably better call timing. Under-described tools are a far more common failure than over-described ones.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Expand the description to state explicitly when the tool should and should not be called",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Shorten the description to a single line to save tokens",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "Rename the tool to something shorter", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "Remove the per-parameter descriptions from the input schema",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-005",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-schemas"],
+      "difficulty": "EASY",
+      "stem": "A parameter accepts exactly one of 'celsius' or 'fahrenheit'. How should the input schema express this?",
+      "explanation": "An `enum` on the property constrains the value to the allowed set and communicates the intent directly in the schema. Describing the constraint only in prose leaves the model free to emit something outside the set, which the caller then has to validate and reject.",
+      "options": [
+        {
+          "label": "A",
+          "body": "A string property with an enum listing both allowed values",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "A free-form string property with the constraint mentioned in the tool description",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "A boolean property named is_celsius", "isCorrect": false },
+        { "label": "D", "body": "Two separate tools, one per unit", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-006",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["mcp-architecture"],
+      "difficulty": "EASY",
+      "stem": "In the Model Context Protocol, which component exposes capabilities such as tools and resources?",
+      "explanation": "The MCP server exposes capabilities; the MCP client, embedded in the host application, connects to servers and surfaces what they offer to the model. Keeping this direction straight matters because the naming is the reverse of what many people first assume.",
+      "options": [
+        { "label": "A", "body": "The MCP server", "isCorrect": true },
+        { "label": "B", "body": "The MCP client", "isCorrect": false },
+        { "label": "C", "body": "The model itself", "isCorrect": false },
+        { "label": "D", "body": "The transport layer", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-007",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["mcp-primitives"],
+      "difficulty": "MEDIUM",
+      "stem": "Which MCP primitive is intended for read-only contextual data that the client can attach to a conversation, rather than an action the model invokes?",
+      "explanation": "Resources are addressable, read-only context, such as a file or a database record, that the client can pull in. Tools are the primitive for actions with effects. Prompts are reusable templates the user can invoke.",
+      "options": [
+        { "label": "A", "body": "Resources", "isCorrect": true },
+        { "label": "B", "body": "Tools", "isCorrect": false },
+        { "label": "C", "body": "Prompts", "isCorrect": false },
+        { "label": "D", "body": "Transports", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-008",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["mcp-primitives"],
+      "difficulty": "MEDIUM",
+      "stem": "An MCP server wants to offer a reusable, parameterized workflow that a user can deliberately invoke by name. Which primitive fits?",
+      "explanation": "Prompts are user-invoked templates: the server publishes them, the client surfaces them for selection, and the user chooses when to run one. Tools differ in that the model decides when to call them, and resources are passive data rather than an invocable workflow.",
+      "options": [
+        { "label": "A", "body": "Prompts", "isCorrect": true },
+        { "label": "B", "body": "Tools", "isCorrect": false },
+        { "label": "C", "body": "Resources", "isCorrect": false },
+        { "label": "D", "body": "Sampling", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-009",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-schemas", "tool-errors"],
+      "difficulty": "HARD",
+      "stem": "Two tools have overlapping descriptions and the model keeps choosing the wrong one. What is the best first fix?",
+      "explanation": "Ambiguity between tools is a description problem before it is a prompting problem. Stating each tool's boundary in its own description, including when to prefer the other, resolves the overlap where the model actually reads it. Steering language in the system prompt papers over the ambiguity instead of removing it.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Rewrite both descriptions so each states its boundary and when the other tool is the right choice",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Add 'ALWAYS use tool A, NEVER use tool B' to the system prompt",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Delete one of the two tools regardless of whether it is needed",
+          "isCorrect": false
+        },
+        { "label": "D", "body": "Make both tools required on every turn", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-tools-010",
+      "domainSlug": "tool-design-mcp",
+      "subtopicSlugs": ["tool-use-api"],
+      "difficulty": "HARD",
+      "stem": "In a manual tool-use loop, what must be appended to the message history after a response containing tool_use blocks?",
+      "explanation": "The full assistant content must be appended, preserving the tool_use blocks, before the user message carrying the tool_result blocks. Appending only the text strips the tool_use blocks, so the results no longer pair with anything and the request is rejected.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The complete assistant content array, preserving the tool_use blocks, followed by a user message containing the matching tool_result blocks",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Only the assistant's text blocks, followed by the tool results",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Only the tool_result blocks, since the model remembers its own request",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "A fresh conversation containing just the tool results",
+          "isCorrect": false
+        }
+      ]
+    },
+
+    {
+      "externalId": "cca-f-prompt-001",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["system-prompts"],
+      "difficulty": "EASY",
+      "stem": "What is the main reason to wrap distinct sections of a long prompt in XML-style tags?",
+      "explanation": "Tags mark unambiguous boundaries between parts of the prompt, so instructions, supplied data, and examples are not confused with one another. This matters most in long prompts where a document could otherwise read as further instructions.",
+      "options": [
+        {
+          "label": "A",
+          "body": "They give each section an unambiguous boundary, so instructions are not confused with supplied data",
+          "isCorrect": true
+        },
+        { "label": "B", "body": "They reduce the token count of the prompt", "isCorrect": false },
+        { "label": "C", "body": "They are required by the Messages API", "isCorrect": false },
+        { "label": "D", "body": "They force the model to reply in XML", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-002",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["system-prompts"],
+      "difficulty": "MEDIUM",
+      "stem": "A system prompt marks nine separate instructions as CRITICAL. What is the likely effect?",
+      "explanation": "When everything is critical, the marker stops distinguishing anything. Emphasis works as a scoped fix for one demonstrably underweighted instruction; used as a default register it flattens priority and can push the model toward over-triggering the behaviours it marks.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The emphasis stops carrying information, because nothing is distinguished from anything else",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "All nine instructions are followed more reliably than if unmarked",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "The API rejects prompts containing more than one CRITICAL marker",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "The instructions are moved to the front of the context automatically",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-003",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["structured-output"],
+      "difficulty": "MEDIUM",
+      "stem": "Which approach gives the strongest guarantee that a response conforms to a specific JSON schema?",
+      "explanation": "Constraining the output format at the API level enforces the schema during generation, so the response validates by construction. Asking for JSON in prose, or post-hoc regex extraction, leaves the caller writing parse-and-retry logic around output that may still be malformed.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Constrain the response format at the API level with a declared JSON schema",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Instruct the model in prose to output only valid JSON",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Extract the first curly-brace-delimited span from the response with a regular expression",
+          "isCorrect": false
+        },
+        { "label": "D", "body": "Lower the temperature to zero", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-004",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["structured-output"],
+      "difficulty": "HARD",
+      "stem": "A pipeline forces JSON by prefilling the assistant turn with an opening brace, then strips stop sequences and retries on parse failures. On current Claude models, what is the problem?",
+      "explanation": "Last-assistant-turn prefill is rejected on current models, and the whole apparatus it supported (stop sequences guarding JSON, regex extraction, retry-on-parse loops) exists only to serve it. Replacing the prefill with a declared output schema lets all of that surrounding code be deleted.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Assistant-turn prefill is no longer supported, and the surrounding stop-sequence and retry scaffolding should be replaced by a declared output schema",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "The prefill is fine, but the retry loop should use exponential backoff",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Nothing; prefill remains the recommended way to force JSON",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "The opening brace should be a square bracket instead",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-005",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["review-loops"],
+      "difficulty": "MEDIUM",
+      "stem": "Why does a separate reviewer pass with a fresh context usually outperform asking the same model to self-critique its answer in place?",
+      "explanation": "A fresh reviewer is not anchored on the reasoning that produced the answer, so it evaluates the artifact rather than defending the path taken to it. Self-critique in the same context tends to rationalize the existing answer instead of finding its flaws.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The reviewer is not anchored on the reasoning that produced the answer, so it judges the artifact rather than defending it",
+          "isCorrect": true
+        },
+        { "label": "B", "body": "The reviewer has access to a larger model", "isCorrect": false },
+        { "label": "C", "body": "Self-critique is disallowed by the API", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "A second pass always costs fewer tokens than one longer pass",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-006",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["review-loops"],
+      "difficulty": "HARD",
+      "stem": "A bug-finding harness instructs the model to 'only report high-severity issues; be conservative'. Measured recall drops on a newer, more capable model. What is the most likely explanation?",
+      "explanation": "The newer model follows the severity filter more literally. It still finds the bugs, then declines to report the ones it judges below the stated bar, so precision rises while measured recall falls. The fix is to ask for full coverage with a confidence and severity label per finding, and filter in a separate pass.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The model follows the severity filter more faithfully and suppresses findings it judges below the bar",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "The newer model is genuinely worse at finding bugs",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "Recall cannot be measured on newer models", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "The harness is hitting a rate limit and silently dropping findings",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-007",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["large-context"],
+      "difficulty": "MEDIUM",
+      "stem": "A long-running conversation is approaching the context window limit and every earlier turn still carries some relevance. Which strategy fits best?",
+      "explanation": "Summarization, or compaction, condenses earlier turns into a shorter representation while keeping their substance, which is what you want when the old material still matters. Truncating the oldest turns discards information that is still in use.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Summarize the earlier turns into a compact representation and continue from it",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Truncate the oldest turns without replacement",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "Lower the maximum output tokens", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "Repeat the system prompt at the end of every turn",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-008",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["large-context"],
+      "difficulty": "MEDIUM",
+      "stem": "What distinguishes context editing from compaction as a context-management strategy?",
+      "explanation": "Context editing prunes: it clears stale tool results or thinking blocks outright. Compaction summarizes: it replaces earlier history with a condensed version. Both keep a long conversation inside the window, but one removes content and the other compresses it.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Context editing clears stale content outright, while compaction replaces earlier history with a summary",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Context editing summarizes, while compaction deletes",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "They are two names for the same mechanism", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "Context editing applies only to the system prompt",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-009",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["large-context", "system-prompts"],
+      "difficulty": "HARD",
+      "stem": "A system prompt interpolates the current timestamp into its opening line. Cache read tokens are consistently zero. Why?",
+      "explanation": "Prompt caching is a prefix match. A timestamp at the front of the system prompt changes the bytes of the prefix on every request, so nothing after it can ever match a cached entry. Volatile values belong after the last cache breakpoint, not before it.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Caching is a prefix match, and a value that changes every request invalidates everything after it",
+          "isCorrect": true
+        },
+        { "label": "B", "body": "System prompts are never cacheable", "isCorrect": false },
+        {
+          "label": "C",
+          "body": "The cache expires after every request regardless of content",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "Timestamps are stripped from prompts before hashing",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-prompt-010",
+      "domainSlug": "prompting-context",
+      "subtopicSlugs": ["system-prompts"],
+      "difficulty": "MEDIUM",
+      "stem": "Which content most belongs in a system prompt rather than being left for the model to infer?",
+      "explanation": "Context that only the author has, such as who the audience is, what the product does, and where the quality bar sits, cannot be inferred and is never wasted. Restating trained defaults like 'be accurate and helpful' adds tokens without adding information.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The audience, the product, and the quality bar for the output",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "A reminder to be accurate, thorough, and helpful",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "An instruction to think step by step before answering",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "A list of the tool names available on this request",
+          "isCorrect": false
+        }
+      ]
+    },
+
+    {
+      "externalId": "cca-f-cc-001",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["claude-md"],
+      "difficulty": "EASY",
+      "stem": "What is the purpose of a CLAUDE.md file in a repository?",
+      "explanation": "CLAUDE.md carries project-specific guidance into context automatically: conventions, architecture notes, and commands that would otherwise have to be repeated every session. It is documentation aimed at the agent rather than at a human reader.",
+      "options": [
+        {
+          "label": "A",
+          "body": "It supplies project-specific instructions and context that load automatically for each session",
+          "isCorrect": true
+        },
+        { "label": "B", "body": "It configures which model the CLI uses", "isCorrect": false },
+        { "label": "C", "body": "It stores the API key for the project", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "It replaces the repository README for human contributors",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-002",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["hooks"],
+      "difficulty": "MEDIUM",
+      "stem": "A team wants a formatter to run automatically after every file edit, with no reliance on the model remembering. What mechanism should they use?",
+      "explanation": "Hooks are executed by the harness at defined lifecycle points, so the behaviour happens deterministically whether or not the model would have thought of it. An instruction in CLAUDE.md is a request the model may or may not honour on any given turn.",
+      "options": [
+        { "label": "A", "body": "A hook configured in settings.json", "isCorrect": true },
+        {
+          "label": "B",
+          "body": "An instruction in CLAUDE.md asking the model to format after editing",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "A slash command the user runs manually", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "A stored memory entry recording the preference",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-003",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["permissions"],
+      "difficulty": "MEDIUM",
+      "stem": "Where are project-scoped permission rules, such as allowing a specific class of shell command, configured?",
+      "explanation": "Permissions live in the project's settings file, typically `.claude/settings.json` with a local variant for personal overrides. Because permission rules gate what the harness will run without prompting, they belong in configuration rather than in prose the model reads.",
+      "options": [
+        { "label": "A", "body": "In the project's .claude/settings.json", "isCorrect": true },
+        { "label": "B", "body": "In CLAUDE.md under a permissions heading", "isCorrect": false },
+        { "label": "C", "body": "In an environment variable read at startup", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "In the tool description of each shell command",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-004",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["permissions"],
+      "difficulty": "MEDIUM",
+      "stem": "A permission prompt is declined by the user. How should the agent proceed?",
+      "explanation": "A declined call is a decision, not a transient error. The agent should adapt its approach or ask what the user would prefer, rather than reissuing the same call and hoping for a different answer.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Treat it as a decision, adjust the approach, and do not retry the identical call",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Retry the identical call immediately in case the decline was accidental",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Escalate by requesting a broader permission scope",
+          "isCorrect": false
+        },
+        { "label": "D", "body": "End the session", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-005",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["slash-commands"],
+      "difficulty": "EASY",
+      "stem": "What is a slash command in Claude Code?",
+      "explanation": "A slash command is a named, reusable prompt or workflow the user invokes deliberately by typing `/name`. It packages instructions the team wants available on demand, as distinct from a hook, which the harness fires automatically.",
+      "options": [
+        {
+          "label": "A",
+          "body": "A named, reusable prompt or workflow the user invokes explicitly",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "A shell command executed in the project directory",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "A lifecycle event that fires automatically after a tool call",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "A permission rule that allows a category of tool",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-006",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["agent-sdk"],
+      "difficulty": "HARD",
+      "stem": "Which statement correctly distinguishes the Claude Agent SDK from the Anthropic API SDK's tool runner?",
+      "explanation": "The Agent SDK packages the full coding-agent harness, including built-in file and shell tools, subagents, and permissions. The tool runner is a thin helper in the regular API SDK that drives the request-execute-loop cycle over tools you define yourself, with no built-in tools and no sandbox.",
+      "options": [
+        {
+          "label": "A",
+          "body": "The Agent SDK ships a full harness with built-in file and shell tools, while the tool runner only loops over tools you define yourself",
+          "isCorrect": true
+        },
+        { "label": "B", "body": "They are two names for the same package", "isCorrect": false },
+        {
+          "label": "C",
+          "body": "The tool runner hosts the agent on Anthropic's infrastructure, while the Agent SDK runs locally",
+          "isCorrect": false
+        },
+        { "label": "D", "body": "The Agent SDK cannot use custom tools", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-007",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["slash-commands", "claude-md"],
+      "difficulty": "MEDIUM",
+      "stem": "Which belongs in a slash command rather than in CLAUDE.md?",
+      "explanation": "CLAUDE.md carries standing context that should apply to every session. A multi-step procedure that is only relevant when someone deliberately starts it, such as a release checklist, is better packaged as a slash command so it does not consume context on unrelated work.",
+      "options": [
+        {
+          "label": "A",
+          "body": "A multi-step release procedure that is only relevant when someone explicitly starts a release",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "The project's directory layout and module boundaries",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "The command used to run the test suite", "isCorrect": false },
+        {
+          "label": "D",
+          "body": "The naming conventions used throughout the codebase",
+          "isCorrect": false
+        }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-008",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["claude-md"],
+      "difficulty": "HARD",
+      "stem": "A CLAUDE.md has grown to several hundred lines, much of it restating general programming best practice. What is the main cost?",
+      "explanation": "CLAUDE.md is loaded into context every session, so every line is a recurring token cost. Content the model already knows displaces the project-specific context that only the authors can supply, which is the material actually worth carrying.",
+      "options": [
+        {
+          "label": "A",
+          "body": "It consumes context on every session while displacing the project-specific detail only the team can supply",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "The file will be ignored once it exceeds a fixed line count",
+          "isCorrect": false
+        },
+        { "label": "C", "body": "It prevents hooks from firing", "isCorrect": false },
+        { "label": "D", "body": "It disables permission prompts", "isCorrect": false }
+      ]
+    },
+    {
+      "externalId": "cca-f-cc-009",
+      "domainSlug": "claude-code",
+      "subtopicSlugs": ["agent-sdk", "hooks"],
+      "difficulty": "MEDIUM",
+      "stem": "A user asks for a behaviour that should happen 'every time, before any commit'. Why can this not be satisfied by a memory or preference entry alone?",
+      "explanation": "Memories and preferences influence what the model chooses to do; they cannot guarantee it. A hook is executed by the harness at the defined point, which is what 'every time' requires. This is the practical dividing line between configuration and guidance.",
+      "options": [
+        {
+          "label": "A",
+          "body": "Memories guide the model's choices but cannot guarantee execution; only a harness-executed hook can",
+          "isCorrect": true
+        },
+        {
+          "label": "B",
+          "body": "Memories are cleared at the start of every session",
+          "isCorrect": false
+        },
+        {
+          "label": "C",
+          "body": "Preferences apply only to formatting, never to behaviour",
+          "isCorrect": false
+        },
+        {
+          "label": "D",
+          "body": "Git operations are exempt from all configuration",
+          "isCorrect": false
+        }
+      ]
+    }
+  ]
+}
