@@ -72,8 +72,15 @@ export function calculateReadiness({
     observedAccuracy: d.answered > 0 ? d.correct / d.answered : null,
     // Beta-binomial shrinkage toward a neutral prior. Replaces a hard minimum
     // sample cutoff: influence of the prior decays smoothly as evidence arrives,
-    // so there is no cliff between n=7 and n=8.
-    shrunkAccuracy: (d.correct + opts.shrinkage * opts.prior) / (d.answered + opts.shrinkage),
+    // so there is no cliff between n=7 and n=8. Guarded against 0/0: a domain
+    // with zero answers and zero shrinkage (finishAttempt scores completed
+    // attempts with no shrinkage) has no evidence at all, so it falls back to
+    // the neutral prior rather than producing NaN and poisoning the weighted
+    // score for every other domain.
+    shrunkAccuracy:
+      d.answered + opts.shrinkage > 0
+        ? (d.correct + opts.shrinkage * opts.prior) / (d.answered + opts.shrinkage)
+        : opts.prior,
     coverage: Math.min(1, d.answered / opts.minSamplePerDomain),
   }));
 

@@ -147,6 +147,35 @@ describe("calculateReadiness", () => {
     expect(result.domains[0]?.shrunkAccuracy).toBeCloseTo(7 / 12, 10);
   });
 
+  it("does not let an untouched domain poison the score at zero shrinkage", () => {
+    // finishAttempt scores with shrinkage: 0. A domain-drill or an
+    // early-finished attempt leaves other domains at zero answered — those
+    // must fall back to the neutral prior, not divide 0/0 into NaN and take
+    // every other domain's score down with it.
+    const result = calculateReadiness({
+      domains: [{ domainId: "a", slug: "a", name: "A", weight: 1, answered: 100, correct: 100 }],
+      ...EXAM,
+      options: { shrinkage: 0 },
+    });
+    expect(result.score).toBe(1000);
+    expect(Number.isNaN(result.score)).toBe(false);
+
+    const mixed = calculateReadiness({
+      domains: tallies([
+        { answered: 4, correct: 2 },
+        { answered: 0, correct: 0 },
+        { answered: 0, correct: 0 },
+        { answered: 0, correct: 0 },
+      ]),
+      ...EXAM,
+      options: { shrinkage: 0 },
+    });
+    expect(Number.isNaN(mixed.score)).toBe(false);
+    // 0.27*0.5 + 0.73*0.5 = 500 — untouched domains score as the neutral prior.
+    expect(mixed.score).toBe(500);
+    expect(mixed.domains[1]?.shrunkAccuracy).toBe(0.5);
+  });
+
   it("survives an empty domain list", () => {
     const result = calculateReadiness({ domains: [], ...EXAM });
 

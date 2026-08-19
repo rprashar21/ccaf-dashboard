@@ -4,6 +4,12 @@ import { db } from "@/lib/db";
 // Certification metadata and the domain blueprint. Read on both the marketing
 // page and inside the app, so it is request-cached.
 
+// Every question imported from the certyiq.com scrape (docs/cca-f-quiz-dashboard.html
+// and the identical docs/claude-certified-architect.pdf) carries this externalId
+// prefix — see prisma/seed/questions/cca-f.json. There's exactly one such import
+// today, so this stays a literal constant rather than a general "source" system.
+export const IMPORTED_SET_EXTERNAL_ID_PREFIX = "cca-f-mockup-";
+
 export const getCertification = cache(async (slug: string) => {
   const certification = await db.certification.findFirst({
     where: { slug, isPublished: true },
@@ -29,6 +35,16 @@ export const getCertification = cache(async (slug: string) => {
 
 export const getPublishedQuestionCount = cache(async (certificationId: string) =>
   db.question.count({ where: { certificationId, status: "PUBLISHED" } }),
+);
+
+export const getImportedQuestionCount = cache(async (certificationId: string) =>
+  db.question.count({
+    where: {
+      certificationId,
+      status: "PUBLISHED",
+      externalId: { startsWith: IMPORTED_SET_EXTERNAL_ID_PREFIX },
+    },
+  }),
 );
 
 /**

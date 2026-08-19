@@ -1,6 +1,7 @@
 # Website Development Roadmap — Phase 1 Foundation
 
 ## Phase 0 — Define the Product
+
 - [ ] Clearly define what the website does.
 - [ ] Define the target users.
 - [ ] Define the core problem the website solves.
@@ -17,6 +18,7 @@
 # Phase 1 — Landing Page
 
 ## 1.1 Project Setup
+
 - [ ] Create the frontend application.
 - [ ] Set up the backend/API if required.
 - [ ] Set up environment configuration.
@@ -27,6 +29,7 @@
 - [ ] Create a clean folder/package structure.
 
 ## 1.2 Landing Page
+
 Build a professional public-facing landing page.
 
 - [ ] Header/navigation.
@@ -44,6 +47,7 @@ Build a professional public-facing landing page.
 - [ ] Loading/error states where required.
 
 ### Phase 1 milestone
+
 **A visitor can open the website and understand the product, then click Sign Up or Login.**
 
 ---
@@ -51,6 +55,7 @@ Build a professional public-facing landing page.
 # Phase 2 — User Authentication
 
 ## 2.1 User Registration
+
 - [ ] Create Sign Up page.
 - [ ] Email validation.
 - [ ] Password validation.
@@ -61,6 +66,7 @@ Build a professional public-facing landing page.
 - [ ] Return appropriate success/error responses.
 
 ## 2.2 Login
+
 - [ ] Create Login page.
 - [ ] Authenticate user credentials.
 - [ ] Handle incorrect credentials.
@@ -70,12 +76,14 @@ Build a professional public-facing landing page.
 - [ ] Prevent unauthenticated users from accessing protected pages.
 
 ## 2.3 Logout
+
 - [ ] Logout button.
 - [ ] Destroy/invalidate session or authentication token.
 - [ ] Redirect user to landing/login page.
 - [ ] Ensure protected APIs cannot be accessed after logout.
 
 ## 2.4 Authentication Security
+
 - [ ] Password hashing.
 - [ ] Secure session/token handling.
 - [ ] HTTPS in production.
@@ -85,6 +93,7 @@ Build a professional public-facing landing page.
 - [ ] Never store passwords in plain text.
 
 ### Phase 2 milestone
+
 **A new user can register, log in, stay authenticated, access protected pages and log out.**
 
 ---
@@ -92,6 +101,7 @@ Build a professional public-facing landing page.
 # Phase 3 — Database & Proper Schema
 
 ## 3.1 Database Setup
+
 - [ ] Select database.
 - [ ] Create development database.
 - [ ] Create production database.
@@ -106,6 +116,7 @@ Start with the minimum required entities.
 Example:
 
 ### User
+
 - [ ] `id`
 - [ ] `email`
 - [ ] `password_hash`
@@ -117,6 +128,7 @@ Example:
 - [ ] `status`
 
 ### Session / Authentication
+
 Depending on authentication architecture:
 
 - [ ] `id`
@@ -126,6 +138,7 @@ Depending on authentication architecture:
 - [ ] `revoked_at`
 
 ### Future entities
+
 Do **not** create dozens of tables just because they might be needed later.
 
 - [ ] Add entities only when a real feature requires them.
@@ -137,6 +150,7 @@ Do **not** create dozens of tables just because they might be needed later.
 - [ ] Define data retention requirements.
 
 ## 3.3 Database Architecture
+
 - [ ] Define database naming conventions.
 - [ ] Define ID strategy.
 - [ ] Define timestamps.
@@ -146,6 +160,7 @@ Do **not** create dozens of tables just because they might be needed later.
 - [ ] Define backup/recovery strategy.
 
 ### Phase 3 milestone
+
 **Users and application data are stored reliably in a properly structured database.**
 
 ---
@@ -174,9 +189,11 @@ The important principle here is:
 Create:
 
 **User A**
+
 - User A creates data.
 
 **User B**
+
 - User B logs in.
 
 Verify:
@@ -187,6 +204,7 @@ Verify:
 - [ ] APIs enforce authorization server-side.
 
 ### Phase 4 milestone
+
 **The application behaves as a multi-user system rather than a static website.**
 
 ---
@@ -209,6 +227,7 @@ Now start building the actual product.
 - [ ] Add success feedback.
 
 ### Phase 5 milestone
+
 **A logged-in user can actually use the core product.**
 
 ---
@@ -237,24 +256,28 @@ As the product grows, make the backend maintainable.
 Don't wait until the end.
 
 ## Unit Tests
+
 - [ ] Test business logic.
 - [ ] Test authentication logic.
 - [ ] Test validation.
 - [ ] Test important edge cases.
 
 ## Integration Tests
+
 - [ ] Test API + database.
 - [ ] Test authentication flow.
 - [ ] Test authorization.
 - [ ] Test user isolation.
 
 ## Frontend Tests
+
 - [ ] Test important components.
 - [ ] Test login/signup.
 - [ ] Test protected routes.
 - [ ] Test important user journeys.
 
 ## End-to-End Tests
+
 - [ ] Visitor opens website.
 - [ ] User registers.
 - [ ] User logs in.
@@ -262,6 +285,7 @@ Don't wait until the end.
 - [ ] User logs out.
 
 ### Phase 7 milestone
+
 **The important user journeys are automatically tested.**
 
 ---
@@ -438,7 +462,6 @@ This prevents AI from continuously rewriting your application.
 **Phase 10:** Launch  
 ↓  
 **Phase 11:** Continuous improvements
-
 
                     ┌─────────────────┐
                     │     User        │

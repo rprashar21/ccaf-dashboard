@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AttemptHistoryTable } from "@/components/AttemptHistoryTable";
+import { AttemptHistoryTable, MODE_LABEL } from "@/components/AttemptHistoryTable";
 import { Footer, Nav } from "@/components/Nav";
 import { ReadinessRail } from "@/components/ReadinessRail";
 import { getGuestUserId } from "@/lib/guest";
@@ -39,17 +39,25 @@ export default async function DashboardPage() {
           </StartPracticeButton>
         </div>
 
-        {inProgress ? (
-          <div className="border-gate bg-gate-soft mt-8 flex flex-wrap items-center justify-between gap-4 rounded-md border px-5 py-4">
-            <p className="text-sm">
-              You have an attempt in progress ({inProgress.questionCount} questions).
-            </p>
-            <Link
-              href={`/c/${certification.slug}/practice/${inProgress.id}`}
-              className="text-gate text-sm font-semibold underline"
-            >
-              Resume it
-            </Link>
+        {inProgress.length > 0 ? (
+          <div className="mt-8 space-y-3">
+            {inProgress.map((attempt) => (
+              <div
+                key={attempt.id}
+                className="border-gate bg-gate-soft flex flex-wrap items-center justify-between gap-4 rounded-md border px-5 py-4"
+              >
+                <p className="text-sm">
+                  You have a {MODE_LABEL[attempt.mode]} attempt in progress ({attempt.questionCount}{" "}
+                  questions).
+                </p>
+                <Link
+                  href={`/c/${certification.slug}/practice/${attempt.id}`}
+                  className="text-gate text-sm font-semibold underline"
+                >
+                  Resume it
+                </Link>
+              </div>
+            ))}
           </div>
         ) : null}
 

@@ -81,6 +81,41 @@ body {
   );
 }
 
+/* Scoped, standalone palette for the practice runner (map/filter/bookmark
+   quiz tool) — a deliberate dark "instrument console" look distinct from the
+   rest of the site's light theme, matching the reference mockup in
+   docs/cca-f-quiz-dashboard.html. Scoped under .quiz-dark rather than added
+   to the global @theme block so it never leaks into dashboard/profile. */
+.quiz-dark {
+  --qd-bg: #0d1117;
+  --qd-panel: #131a24;
+  --qd-panel-2: #171f2c;
+  --qd-border: #232d3d;
+  --qd-text: #e7ebf1;
+  --qd-text-dim: #8b96a8;
+  --qd-accent: #5eead4;
+  --qd-accent-dim: #1c3d38;
+  --qd-indigo: #818cf8;
+  --qd-amber: #f5b878;
+  --qd-good: #5eead4;
+  --qd-good-bg: #12312c;
+  --qd-bad: #fb7185;
+  --qd-bad-bg: #341b23;
+
+  background: radial-gradient(ellipse 1200px 800px at 20% -10%, #16202e 0%, var(--qd-bg) 55%);
+  color: var(--qd-text);
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+}
+
+.quiz-dark .tick {
+  font-family: var(--font-mono);
+  color: var(--qd-text-dim);
+}
+
+.quiz-dark :focus-visible {
+  outline: 2px solid var(--qd-accent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

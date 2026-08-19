@@ -8,11 +8,14 @@ import { gradeResponse } from "@/lib/quiz/grade";
 import { selectQuestions, type Candidate } from "@/lib/quiz/selectQuestions";
 import { calculateReadiness, type DomainTally } from "@/lib/scoring/readiness";
 import { getGuestUserId } from "@/lib/guest";
+import { IMPORTED_SET_EXTERNAL_ID_PREFIX } from "@/server/queries/certifications";
 
 const startSchema = z.object({
   certSlug: z.string().min(1),
-  mode: z.enum(["PRACTICE", "DOMAIN_DRILL"]),
-  questionCount: z.number().int().min(1).max(60),
+  mode: z.enum(["PRACTICE", "DOMAIN_DRILL", "MOCK_EXAM", "FULL_SET", "IMPORTED_SET"]),
+  // Only meaningful for PRACTICE/DOMAIN_DRILL — FULL_SET/IMPORTED_SET always
+  // take every question in their pool, so they have none to request.
+  questionCount: z.number().int().min(1).max(60).optional(),
   domainId: z.string().min(1).optional(),
 });
 
@@ -26,12 +29,72 @@ export async function startAttempt(input: z.infer<typeof startSchema>) {
   });
   if (!certification) throw new Error(`Unknown certification "${certSlug}"`);
 
-  // One attempt at a time per certification: resume rather than stacking up
-  // half-finished attempts the learner will never come back to.
+  // One attempt at a time per certification *and mode*: resume rather than
+  // stacking up half-finished attempts of the same kind the learner will
+  // never come back to. Scoped by mode (not just certification) so starting
+  // a mock exam while a full-set run is still open doesn't silently dump the
+  // learner into the unrelated in-progress attempt.
   const existing = await db.quizAttempt.findFirst({
-    where: { userId, certificationId: certification.id, status: "IN_PROGRESS" },
+    where: { userId, certificationId: certification.id, status: "IN_PROGRESS", mode },
   });
   if (existing) redirect(`/c/${certSlug}/practice/${existing.id}`);
+
+  const attemptId =
+    mode === "FULL_SET" || mode === "IMPORTED_SET"
+      ? await startBulkAttempt(userId, certification.id, mode)
+      : await startSampledAttempt(userId, certification, mode, questionCount, domainId);
+
+  redirect(`/c/${certSlug}/practice/${attemptId}`);
+}
+
+/**
+ * Every question in the mode's pool, once, in a stable order. Deliberately
+ * bypasses selectQuestions: that function is for weighted sampling of a
+ * subset, and both bulk modes want completeness, not a share of each domain.
+ */
+async function startBulkAttempt(
+  userId: string,
+  certificationId: string,
+  mode: "FULL_SET" | "IMPORTED_SET",
+): Promise<string> {
+  const pool = await db.question.findMany({
+    where: {
+      certificationId,
+      status: "PUBLISHED",
+      ...(mode === "IMPORTED_SET"
+        ? { externalId: { startsWith: IMPORTED_SET_EXTERNAL_ID_PREFIX } }
+        : {}),
+    },
+    select: { id: true },
+    orderBy: [{ domain: { sortOrder: "asc" } }, { externalId: "asc" }],
+  });
+  if (pool.length === 0) throw new Error("No published questions available");
+
+  return db.$transaction(async (tx) => {
+    const created = await tx.quizAttempt.create({
+      data: { userId, certificationId, mode, questionCount: pool.length },
+    });
+
+    await tx.quizAttemptQuestion.createMany({
+      data: pool.map((question, position) => ({
+        attemptId: created.id,
+        questionId: question.id,
+        position,
+      })),
+    });
+
+    return created.id;
+  });
+}
+
+async function startSampledAttempt(
+  userId: string,
+  certification: { id: string; domains: Array<{ id: string; weight: unknown }> },
+  mode: "PRACTICE" | "DOMAIN_DRILL" | "MOCK_EXAM",
+  questionCount: number | undefined,
+  domainId: string | undefined,
+): Promise<string> {
+  if (!questionCount) throw new Error("questionCount is required for this mode");
 
   const pool = await db.question.findMany({
     where: {
@@ -80,7 +143,7 @@ export async function startAttempt(input: z.infer<typeof startSchema>) {
 
   const picked = selectQuestions({ candidates, domains, count: questionCount });
 
-  const attempt = await db.$transaction(async (tx) => {
+  return db.$transaction(async (tx) => {
     const created = await tx.quizAttempt.create({
       data: {
         userId,
@@ -99,10 +162,8 @@ export async function startAttempt(input: z.infer<typeof startSchema>) {
       })),
     });
 
-    return created;
+    return created.id;
   });
-
-  redirect(`/c/${certSlug}/practice/${attempt.id}`);
 }
 
 const submitSchema = z.object({
@@ -265,4 +326,34 @@ export async function abandonAttempt(input: z.infer<typeof finishSchema>) {
 
   revalidatePath("/dashboard");
   redirect("/dashboard");
+}
+
+const bookmarkSchema = z.object({
+  attemptId: z.string().min(1),
+  questionId: z.string().min(1),
+});
+
+export async function toggleBookmark(
+  input: z.infer<typeof bookmarkSchema>,
+): Promise<{ bookmarked: boolean }> {
+  const userId = await getGuestUserId();
+  const { attemptId, questionId } = bookmarkSchema.parse(input);
+
+  const attempt = await db.quizAttempt.findFirst({ where: { id: attemptId, userId } });
+  if (!attempt) throw new Error("Attempt not found");
+
+  // A slot exists as soon as the attempt starts, whether or not it's been
+  // answered — bookmarking must not require a QuestionResponse row to exist.
+  const slot = await db.quizAttemptQuestion.findUnique({
+    where: { attemptId_questionId: { attemptId, questionId } },
+  });
+  if (!slot) throw new Error("That question is not part of this attempt");
+
+  const updated = await db.quizAttemptQuestion.update({
+    where: { id: slot.id },
+    data: { bookmarked: !slot.bookmarked },
+    select: { bookmarked: true },
+  });
+
+  return updated;
 }

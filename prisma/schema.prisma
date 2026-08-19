@@ -260,6 +260,17 @@ enum AttemptMode {
   PRACTICE
   TIMED_EXAM
   DOMAIN_DRILL
+  FULL_SET
+  // Every question sourced from the certyiq.com import (docs/cca-f-quiz-dashboard.html
+  // and the identical docs/claude-certified-architect.pdf), tagged by externalId
+  // prefix "cca-f-mockup-" — a subset of FULL_SET, kept as its own mode so history
+  // can distinguish "everything" from "just the imported set".
+  IMPORTED_SET
+  // A weighted sample of a chosen size (20/40/60) from the whole bank, taken
+  // through the map/filter/bookmark runner rather than the linear one — distinct
+  // from PRACTICE (which uses the same sampler but the linear runner) so history
+  // can tell a quick mixed-set drill apart from a deliberate mock exam.
+  MOCK_EXAM
 }
 
 enum AttemptStatus {
@@ -308,10 +319,14 @@ model QuizAttempt {
 // runner resumable and stops an in-flight attempt changing if a question is
 // archived mid-run.
 model QuizAttemptQuestion {
-  id         String @id @default(cuid())
+  id         String  @id @default(cuid())
   attemptId  String
   questionId String
   position   Int
+  // Lives here, not on QuestionResponse: a slot exists as soon as the attempt
+  // starts, before it's answered, and bookmarking an unanswered question must
+  // not require creating a response row.
+  bookmarked Boolean @default(false)
 
   attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)

@@ -5,9 +5,12 @@ import { startAttempt } from "@/server/actions/attempts";
 
 type Props = {
   certSlug: string;
-  questionCount: number;
+  /** Ignored when bulkMode is set — bulk modes always take their whole pool. */
+  questionCount?: number;
   domainId?: string;
-  mode?: "PRACTICE" | "DOMAIN_DRILL";
+  mode?: "PRACTICE" | "DOMAIN_DRILL" | "MOCK_EXAM";
+  /** Starts a FULL_SET or IMPORTED_SET attempt instead, overriding mode/questionCount/domainId. */
+  bulkMode?: "FULL_SET" | "IMPORTED_SET";
   children: React.ReactNode;
   variant?: "primary" | "secondary";
 };
@@ -17,6 +20,7 @@ export function StartPracticeButton({
   questionCount,
   domainId,
   mode = "PRACTICE",
+  bulkMode,
   children,
   variant = "primary",
 }: Props) {
@@ -33,7 +37,11 @@ export function StartPracticeButton({
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          await startAttempt({ certSlug, mode, questionCount, domainId });
+          if (bulkMode) {
+            await startAttempt({ certSlug, mode: bulkMode });
+          } else {
+            await startAttempt({ certSlug, mode, questionCount, domainId });
+          }
         })
       }
       className={`rounded-md px-5 py-2.5 font-semibold disabled:opacity-50 ${styles}`}

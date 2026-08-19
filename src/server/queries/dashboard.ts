@@ -42,9 +42,13 @@ export async function getDashboardData(userId: string, certSlug: string) {
       orderBy: { completedAt: "desc" },
       select: { completedAt: true },
     }),
-    db.quizAttempt.findFirst({
+    // Scoped by mode at start time (see startAttempt), so more than one of
+    // these can legitimately be open at once — e.g. a full-set marathon left
+    // running alongside a quick mock exam.
+    db.quizAttempt.findMany({
       where: { userId, certificationId: certification.id, status: "IN_PROGRESS" },
-      select: { id: true, questionCount: true },
+      orderBy: { startedAt: "desc" },
+      select: { id: true, mode: true, questionCount: true },
     }),
   ]);
 
