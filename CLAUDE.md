@@ -4,6 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+#Imp 
+When in plan mode when claude previews a plan alywas create an html page with cclear explanations and diagrams about that topic.
+Do not miss any important detail. 
+Always include a diagram when it plans something with moving parts.
+
 ## What this is
 
 A certification-prep quiz app (currently seeded with one exam: Anthropic's CCA-F). Next.js
@@ -87,3 +92,6 @@ zod) — don't add code paths that assume OAuth env vars are always present.
 - `next.config.ts`, `prisma.config.ts`, and the `pnpm-workspace.yaml` are minimal; check them
   before assuming a convention that doesn't apply here.
 - The `.idea` directory and `dev.log` are local/IDE artifacts, not project config.
+- `DATABASE.md` and `DEPLOYMENT.md` go deeper than the README on, respectively, the Postgres/
+  Prisma setup and the Vercel+Neon deploy pipeline — check them before re-deriving either from
+  scratch.

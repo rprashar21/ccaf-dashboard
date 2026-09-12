@@ -101,6 +101,19 @@ export default async function PracticeConfigPage({
         </section>
 
         <section className="border-hairline bg-raise mt-6 rounded-lg border p-6">
+          <h2 className="tick mb-5">Exam mode</h2>
+          <p className="text-graphite mb-5 text-sm">
+            The full simulation: {certification.examQuestionCount} questions in{" "}
+            {certification.examDurationMinutes} minutes, weighted across domains like the real exam.
+            The clock pauses when you do and picks up exactly where you left off.
+          </p>
+          <StartPracticeButton certSlug={certSlug} mode="TIMED_EXAM" variant="primary">
+            Take the exam ({certification.examQuestionCount} questions ·{" "}
+            {certification.examDurationMinutes} min)
+          </StartPracticeButton>
+        </section>
+
+        <section className="border-hairline bg-raise mt-6 rounded-lg border p-6">
           <h2 className="tick mb-5">Full set</h2>
           <p className="text-graphite mb-5 text-sm">
             Every published question, once, with a map to jump around, filters for

@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { getGuestUserId } from "@/lib/guest";
 import { Footer, Nav } from "@/components/Nav";
 import { ReadinessRail } from "@/components/ReadinessRail";
+import { formatClock } from "@/lib/quiz/examTimer";
 
 export const metadata: Metadata = { title: "Results" };
 
@@ -50,6 +51,12 @@ export default async function ResultsPage({
         <h1 className="font-display mt-2 text-3xl">
           {attempt.correctCount ?? 0} of {answered} correct
         </h1>
+        {attempt.timeLimitSeconds !== null && attempt.durationSeconds !== null ? (
+          <p className="text-graphite mt-2 text-sm">
+            Finished in {formatClock(attempt.durationSeconds)} of{" "}
+            {formatClock(attempt.timeLimitSeconds)} allowed
+          </p>
+        ) : null}
 
         <section className="border-hairline bg-raise mt-8 rounded-lg border p-8">
           <ReadinessRail

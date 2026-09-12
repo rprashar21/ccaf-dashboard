@@ -44,9 +44,14 @@ export async function getDashboardData(userId: string, certSlug: string) {
     }),
     // Scoped by mode at start time (see startAttempt), so more than one of
     // these can legitimately be open at once — e.g. a full-set marathon left
-    // running alongside a quick mock exam.
+    // running alongside a quick mock exam. PAUSED counts as open too, so a
+    // paused exam still shows up as something to resume.
     db.quizAttempt.findMany({
-      where: { userId, certificationId: certification.id, status: "IN_PROGRESS" },
+      where: {
+        userId,
+        certificationId: certification.id,
+        status: { in: ["IN_PROGRESS", "PAUSED"] },
+      },
       orderBy: { startedAt: "desc" },
       select: { id: true, mode: true, questionCount: true },
     }),

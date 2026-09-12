@@ -6,15 +6,17 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { gradeResponse } from "@/lib/quiz/grade";
 import { selectQuestions, type Candidate } from "@/lib/quiz/selectQuestions";
+import { activeElapsedSeconds, isExpired } from "@/lib/quiz/examTimer";
 import { calculateReadiness, type DomainTally } from "@/lib/scoring/readiness";
 import { getGuestUserId } from "@/lib/guest";
 import { IMPORTED_SET_EXTERNAL_ID_PREFIX } from "@/server/queries/certifications";
 
 const startSchema = z.object({
   certSlug: z.string().min(1),
-  mode: z.enum(["PRACTICE", "DOMAIN_DRILL", "MOCK_EXAM", "FULL_SET", "IMPORTED_SET"]),
-  // Only meaningful for PRACTICE/DOMAIN_DRILL — FULL_SET/IMPORTED_SET always
-  // take every question in their pool, so they have none to request.
+  mode: z.enum(["PRACTICE", "DOMAIN_DRILL", "MOCK_EXAM", "FULL_SET", "IMPORTED_SET", "TIMED_EXAM"]),
+  // Only meaningful for PRACTICE/DOMAIN_DRILL — FULL_SET/IMPORTED_SET/TIMED_EXAM
+  // always take a fixed count (the whole pool, or the certification's exam
+  // size), so they have none to request.
   questionCount: z.number().int().min(1).max(60).optional(),
   domainId: z.string().min(1).optional(),
 });
@@ -33,16 +35,25 @@ export async function startAttempt(input: z.infer<typeof startSchema>) {
   // stacking up half-finished attempts of the same kind the learner will
   // never come back to. Scoped by mode (not just certification) so starting
   // a mock exam while a full-set run is still open doesn't silently dump the
-  // learner into the unrelated in-progress attempt.
+  // learner into the unrelated in-progress attempt. PAUSED counts as "still
+  // going" here so pausing an exam and clicking "Take the exam" again resumes
+  // it instead of starting a second one.
   const existing = await db.quizAttempt.findFirst({
-    where: { userId, certificationId: certification.id, status: "IN_PROGRESS", mode },
+    where: {
+      userId,
+      certificationId: certification.id,
+      status: { in: ["IN_PROGRESS", "PAUSED"] },
+      mode,
+    },
   });
   if (existing) redirect(`/c/${certSlug}/practice/${existing.id}`);
 
   const attemptId =
     mode === "FULL_SET" || mode === "IMPORTED_SET"
       ? await startBulkAttempt(userId, certification.id, mode)
-      : await startSampledAttempt(userId, certification, mode, questionCount, domainId);
+      : mode === "TIMED_EXAM"
+        ? await startTimedExamAttempt(userId, certification)
+        : await startSampledAttempt(userId, certification, mode, questionCount, domainId);
 
   redirect(`/c/${certSlug}/practice/${attemptId}`);
 }
@@ -87,18 +98,19 @@ async function startBulkAttempt(
   });
 }
 
-async function startSampledAttempt(
+/**
+ * Prior answers drive the unseen / previously-missed / least-recently-seen
+ * tiering in the selector — shared by every mode that samples from the pool
+ * rather than taking it whole.
+ */
+async function buildCandidates(
   userId: string,
-  certification: { id: string; domains: Array<{ id: string; weight: unknown }> },
-  mode: "PRACTICE" | "DOMAIN_DRILL" | "MOCK_EXAM",
-  questionCount: number | undefined,
+  certificationId: string,
   domainId: string | undefined,
-): Promise<string> {
-  if (!questionCount) throw new Error("questionCount is required for this mode");
-
+): Promise<Candidate[]> {
   const pool = await db.question.findMany({
     where: {
-      certificationId: certification.id,
+      certificationId,
       status: "PUBLISHED",
       ...(domainId ? { domainId } : {}),
     },
@@ -106,8 +118,6 @@ async function startSampledAttempt(
   });
   if (pool.length === 0) throw new Error("No published questions available");
 
-  // Prior answers drive the unseen / previously-missed / least-recently-seen
-  // tiering in the selector.
   const history = await db.questionResponse.findMany({
     where: { userId, questionId: { in: pool.map((q) => q.id) } },
     orderBy: { answeredAt: "desc" },
@@ -126,7 +136,7 @@ async function startSampledAttempt(
       });
   }
 
-  const candidates: Candidate[] = pool.map((q) => {
+  return pool.map((q) => {
     const prior = seen.get(q.id);
     return {
       id: q.id,
@@ -136,7 +146,18 @@ async function startSampledAttempt(
       lastAnsweredAt: prior?.lastAt ?? null,
     };
   });
+}
 
+async function startSampledAttempt(
+  userId: string,
+  certification: { id: string; domains: Array<{ id: string; weight: unknown }> },
+  mode: "PRACTICE" | "DOMAIN_DRILL" | "MOCK_EXAM",
+  questionCount: number | undefined,
+  domainId: string | undefined,
+): Promise<string> {
+  if (!questionCount) throw new Error("questionCount is required for this mode");
+
+  const candidates = await buildCandidates(userId, certification.id, domainId);
   const domains = domainId
     ? [{ domainId, weight: 1 }]
     : certification.domains.map((d) => ({ domainId: d.id, weight: Number(d.weight) }));
@@ -151,6 +172,46 @@ async function startSampledAttempt(
         mode,
         questionCount: picked.length,
         domainFilterId: domainId ?? null,
+      },
+    });
+
+    await tx.quizAttemptQuestion.createMany({
+      data: picked.map((question, position) => ({
+        attemptId: created.id,
+        questionId: question.id,
+        position,
+      })),
+    });
+
+    return created.id;
+  });
+}
+
+/**
+ * A weighted sample sized and timed to match the certification's own exam
+ * exactly — no count/duration picker, unlike Mock Exam.
+ */
+async function startTimedExamAttempt(
+  userId: string,
+  certification: {
+    id: string;
+    examQuestionCount: number;
+    examDurationMinutes: number;
+    domains: Array<{ id: string; weight: unknown }>;
+  },
+): Promise<string> {
+  const candidates = await buildCandidates(userId, certification.id, undefined);
+  const domains = certification.domains.map((d) => ({ domainId: d.id, weight: Number(d.weight) }));
+  const picked = selectQuestions({ candidates, domains, count: certification.examQuestionCount });
+
+  return db.$transaction(async (tx) => {
+    const created = await tx.quizAttempt.create({
+      data: {
+        userId,
+        certificationId: certification.id,
+        mode: "TIMED_EXAM",
+        questionCount: picked.length,
+        timeLimitSeconds: certification.examDurationMinutes * 60,
       },
     });
 
@@ -188,7 +249,19 @@ export async function submitResponse(input: z.infer<typeof submitSchema>): Promi
     include: { certification: { select: { slug: true } } },
   });
   if (!attempt) throw new Error("Attempt not found");
+  if (attempt.status === "PAUSED") throw new Error("This attempt is paused — resume it first");
   if (attempt.status !== "IN_PROGRESS") throw new Error("This attempt is already finished");
+
+  // Server-side backstop against a stale client submitting past its time
+  // limit — the UI is expected to auto-finish on its own countdown, but this
+  // is the check that actually enforces it.
+  if (
+    attempt.timeLimitSeconds !== null &&
+    isExpired(attempt, attempt.timeLimitSeconds, new Date())
+  ) {
+    await completeAttempt(attempt.id);
+    throw new Error("Time's up — this attempt has been submitted");
+  }
 
   // The question must be on this attempt's slate; a client cannot answer
   // something that was never dealt to it.
@@ -234,23 +307,23 @@ export async function submitResponse(input: z.infer<typeof submitSchema>): Promi
 
 const finishSchema = z.object({ attemptId: z.string().min(1) });
 
-export async function finishAttempt(input: z.infer<typeof finishSchema>) {
-  const userId = await getGuestUserId();
-  const { attemptId } = finishSchema.parse(input);
-
+/**
+ * Scores and closes out an attempt. Idempotent — a no-op if already
+ * COMPLETED. Ownership must already be verified by the caller; this is an
+ * internal helper shared by finishAttempt (learner-initiated) and
+ * submitResponse's server-side expiry backstop, neither of which re-checks
+ * userId here.
+ */
+async function completeAttempt(attemptId: string): Promise<void> {
   const attempt = await db.quizAttempt.findFirst({
-    where: { id: attemptId, userId },
+    where: { id: attemptId },
     include: {
       certification: { include: { domains: { orderBy: { sortOrder: "asc" } } } },
       responses: { select: { domainId: true, isCorrect: true } },
     },
   });
   if (!attempt) throw new Error("Attempt not found");
-
-  const slug = attempt.certification.slug;
-
-  // Idempotent: finishing an already-finished attempt just goes to its results.
-  if (attempt.status === "COMPLETED") redirect(`/c/${slug}/practice/${attemptId}/results`);
+  if (attempt.status === "COMPLETED") return;
 
   const tallyByDomain = new Map<string, { answered: number; correct: number }>();
   for (const response of attempt.responses) {
@@ -292,7 +365,9 @@ export async function finishAttempt(input: z.infer<typeof finishSchema>) {
       data: {
         status: "COMPLETED",
         completedAt,
-        durationSeconds: Math.round((completedAt.getTime() - attempt.startedAt.getTime()) / 1000),
+        // Wall-clock time minus any time spent paused — a TIMED_EXAM attempt
+        // that was paused must not have that time counted against it.
+        durationSeconds: activeElapsedSeconds(attempt, completedAt),
         correctCount,
         rawAccuracy: answered > 0 ? correctCount / answered : 0,
         scaledScore: scored.score,
@@ -312,7 +387,52 @@ export async function finishAttempt(input: z.infer<typeof finishSchema>) {
   });
 
   revalidatePath("/dashboard");
-  redirect(`/c/${slug}/practice/${attemptId}/results`);
+}
+
+export async function finishAttempt(input: z.infer<typeof finishSchema>) {
+  const userId = await getGuestUserId();
+  const { attemptId } = finishSchema.parse(input);
+
+  const attempt = await db.quizAttempt.findFirst({
+    where: { id: attemptId, userId },
+    include: { certification: { select: { slug: true } } },
+  });
+  if (!attempt) throw new Error("Attempt not found");
+
+  await completeAttempt(attemptId);
+  redirect(`/c/${attempt.certification.slug}/practice/${attemptId}/results`);
+}
+
+export async function pauseAttempt(input: z.infer<typeof finishSchema>): Promise<void> {
+  const userId = await getGuestUserId();
+  const { attemptId } = finishSchema.parse(input);
+
+  await db.quizAttempt.updateMany({
+    where: { id: attemptId, userId, status: "IN_PROGRESS", mode: "TIMED_EXAM" },
+    data: { status: "PAUSED", pausedAt: new Date() },
+  });
+}
+
+export async function resumeAttempt(input: z.infer<typeof finishSchema>): Promise<void> {
+  const userId = await getGuestUserId();
+  const { attemptId } = finishSchema.parse(input);
+
+  const attempt = await db.quizAttempt.findFirst({
+    where: { id: attemptId, userId, status: "PAUSED" },
+    select: { pausedAt: true },
+  });
+  if (!attempt || !attempt.pausedAt) return;
+
+  const elapsedSeconds = Math.round((Date.now() - attempt.pausedAt.getTime()) / 1000);
+
+  await db.quizAttempt.update({
+    where: { id: attemptId },
+    data: {
+      status: "IN_PROGRESS",
+      pausedAt: null,
+      pausedSeconds: { increment: elapsedSeconds },
+    },
+  });
 }
 
 export async function abandonAttempt(input: z.infer<typeof finishSchema>) {
@@ -320,7 +440,7 @@ export async function abandonAttempt(input: z.infer<typeof finishSchema>) {
   const { attemptId } = finishSchema.parse(input);
 
   await db.quizAttempt.updateMany({
-    where: { id: attemptId, userId, status: "IN_PROGRESS" },
+    where: { id: attemptId, userId, status: { in: ["IN_PROGRESS", "PAUSED"] } },
     data: { status: "ABANDONED", completedAt: new Date() },
   });
 

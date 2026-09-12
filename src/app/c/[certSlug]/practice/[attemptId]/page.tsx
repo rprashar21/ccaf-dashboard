@@ -35,7 +35,8 @@ export default async function AttemptPage({
   if (
     attemptMeta.mode === "FULL_SET" ||
     attemptMeta.mode === "IMPORTED_SET" ||
-    attemptMeta.mode === "MOCK_EXAM"
+    attemptMeta.mode === "MOCK_EXAM" ||
+    attemptMeta.mode === "TIMED_EXAM"
   ) {
     const attempt = await db.quizAttempt.findUniqueOrThrow({
       where: { id: attemptId },
@@ -96,6 +97,17 @@ export default async function AttemptPage({
               certName={attempt.certification.name}
               domainNames={domainNames}
               slots={slots}
+              timer={
+                attempt.timeLimitSeconds !== null
+                  ? {
+                      status: attempt.status as "IN_PROGRESS" | "PAUSED",
+                      startedAt: attempt.startedAt.toISOString(),
+                      pausedAt: attempt.pausedAt?.toISOString() ?? null,
+                      pausedSeconds: attempt.pausedSeconds,
+                      timeLimitSeconds: attempt.timeLimitSeconds,
+                    }
+                  : null
+              }
             />
           </div>
         </main>

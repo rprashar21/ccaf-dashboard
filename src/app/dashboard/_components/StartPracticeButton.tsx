@@ -8,7 +8,7 @@ type Props = {
   /** Ignored when bulkMode is set — bulk modes always take their whole pool. */
   questionCount?: number;
   domainId?: string;
-  mode?: "PRACTICE" | "DOMAIN_DRILL" | "MOCK_EXAM";
+  mode?: "PRACTICE" | "DOMAIN_DRILL" | "MOCK_EXAM" | "TIMED_EXAM";
   /** Starts a FULL_SET or IMPORTED_SET attempt instead, overriding mode/questionCount/domainId. */
   bulkMode?: "FULL_SET" | "IMPORTED_SET";
   children: React.ReactNode;

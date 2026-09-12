@@ -28,6 +28,13 @@ URL `http://localhost:3000/api/auth/callback/<provider>`.
 
 `pnpm db:demo` seeds a demo learner with completed attempts so the dashboard has data to render.
 
+## Deploying
+
+Hosted on [Vercel](https://vercel.com) (native Next.js/Server Actions support) with
+[Neon](https://neon.tech) for production Postgres (neither Vercel nor Netlify host a database).
+See [DEPLOYMENT.md](DEPLOYMENT.md) for one-time setup, the env var table, and what runs on
+every deploy.
+
 ## Scripts
 
 | Command                                             | What it does                                                        |

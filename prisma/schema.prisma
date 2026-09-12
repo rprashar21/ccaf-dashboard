@@ -275,6 +275,9 @@ enum AttemptMode {
 
 enum AttemptStatus {
   IN_PROGRESS
+  // Only reachable from TIMED_EXAM's IN_PROGRESS state — the clock is frozen
+  // and answering is blocked until resumeAttempt() clears it.
+  PAUSED
   COMPLETED
   ABANDONED
 }
@@ -291,6 +294,11 @@ model QuizAttempt {
   domainFilterId   String?
   timeLimitSeconds Int?
 
+  // Set while status is PAUSED, null otherwise. pausedSeconds accumulates the
+  // total paused duration across every pause/resume cycle so elapsed exam
+  // time can be computed as wall-clock time minus time spent paused.
+  pausedAt        DateTime?
+  pausedSeconds   Int       @default(0)
   startedAt       DateTime  @default(now())
   completedAt     DateTime?
   durationSeconds Int?
